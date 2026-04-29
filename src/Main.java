@@ -8,6 +8,8 @@ import java.time.format.DateTimeFormatter;
 
  public class Main {
 
+     List<Request> requests = FileManager.loadRequests();
+
      public static int readInt(Scanner sc, String message) {
          while (true) {
              try {
@@ -43,13 +45,14 @@ import java.time.format.DateTimeFormatter;
          DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
 
          int option = 0;
-         while (option != 5) {
+         while (option != 6) {
 
              System.out.println("1 - Register product");
              System.out.println("2 - Create order");
              System.out.println("3 - List products");
              System.out.println("4 - Order List");
-             System.out.println("5 - Exit");
+             System.out.println("5 - Update order status");
+             System.out.println("6 - Exit");
 
              option = readInt(sc, "Choose an option:");
              sc.nextLine(); // Buffer
@@ -70,6 +73,9 @@ import java.time.format.DateTimeFormatter;
                  listOrders(requests, fmt);
              }
 
+             if (option == 5) {
+                 updateOrderStatus(requests, sc);
+             }
 
          }
 
@@ -152,6 +158,7 @@ import java.time.format.DateTimeFormatter;
              System.out.println("Empty order! Not saved.");
          } else {
              requests.add(request);
+             FileManager.saveRequests(requests);
              System.out.printf("Order created! Total: $%.2f\n", request.calculateTotal());
          }
      }
@@ -181,8 +188,10 @@ import java.time.format.DateTimeFormatter;
          for (int i = 0; i < requests.size(); i++) {
              Request r = requests.get(i);
 
+
              System.out.println("Order " + (i + 1) + ":");
              System.out.println("Order time: " + r.getCreatedAt().format(fmt));
+             System.out.println("Status: " + r.getStatus());
 
              for (RequestItem item : r.getItems()) {
                  System.out.printf(
@@ -198,6 +207,46 @@ import java.time.format.DateTimeFormatter;
          }
      }
 
+     //Update Order Status OPT 5
+     public static void updateOrderStatus(List<Request> requests, Scanner sc) {
+
+         if (requests.isEmpty()) {
+             System.out.println("No orders available!");
+             return;
+         }
+
+         for (int i = 0; i < requests.size(); i++) {
+             System.out.println(i + " - Order");
+         }
+
+         int index = readInt(sc, "Choose the order:");
+
+         if (index >= 0 && index < requests.size()) {
+
+             Request r = requests.get(index);
+
+             System.out.println("1 - PAID");
+             System.out.println("2 - CANCELLED");
+
+             int choice = readInt(sc, "Choose new status:");
+
+             boolean updated = false;
+
+             if (choice == 1) {
+                 updated = r.setStatus(OrderStatus.PAID);
+             } else if (choice == 2) {
+                 updated = r.setStatus(OrderStatus.CANCELLED);
+             } else {
+                 System.out.println("Invalid option!");
+             }
+
+             if (updated) {
+                 FileManager.saveRequests(requests);
+             }
+
+         }
+     }
  }
+
 
 

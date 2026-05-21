@@ -2,40 +2,41 @@ import java.util.ArrayList;
 import java.util.List;
 import java.time.LocalDateTime;
 
-
-
 public class Request {
 
     private LocalDateTime createdAt;
 
     private List<RequestItem> items = new ArrayList<>();
 
+    private List<StatusHistory> history = new ArrayList<>();
+
     private OrderStatus status;
-
-
-    public void addItem(RequestItem item){
-        items.add(item);
-    }
 
     public Request() {
         this.createdAt = LocalDateTime.now();
-        this.status = OrderStatus.PENDING;
+        this.status = OrderStatus.PENDING_PAYMENT;
+
+        history.add(new StatusHistory(status));
     }
 
+    public void addItem(RequestItem item) {
+        items.add(item);
+    }
 
     public OrderStatus getStatus() {
         return status;
     }
 
-    public boolean setStatus(OrderStatus newStatus) {
+    public boolean updateStatus(OrderStatus newStatus) {
+
 
         if (this.status == OrderStatus.CANCELLED) {
             System.out.println("Cannot change a CANCELLED order!");
             return false;
         }
 
-        if (this.status == OrderStatus.PAID) {
-            System.out.println("Cannot change a PAID order!");
+        if (this.status == OrderStatus.DELIVERED) {
+            System.out.println("Cannot change a DELIVERED order!");
             return false;
         }
 
@@ -44,15 +45,39 @@ public class Request {
             return false;
         }
 
-        this.status = newStatus;
-        return true;
+        if (newStatus == OrderStatus.CANCELLED) {
+            this.status = OrderStatus.CANCELLED;
+            history.add(new StatusHistory(newStatus));
+            return true;
+        }
+
+        if (this.status == OrderStatus.PENDING_PAYMENT && newStatus == OrderStatus.PREPARING) {
+            this.status = newStatus;
+            history.add(new StatusHistory(newStatus));
+            return true;
+        }
+
+        if (this.status == OrderStatus.PREPARING && newStatus == OrderStatus.SHIPPED) {
+            this.status = newStatus;
+            history.add(new StatusHistory(newStatus));
+            return true;
+        }
+
+        if (this.status == OrderStatus.SHIPPED && newStatus == OrderStatus.DELIVERED) {
+            this.status = newStatus;
+            history.add(new StatusHistory(newStatus));
+            return true;
+        }
+
+        System.out.println("Invalid status transition!");
+        return false;
     }
 
-    public double calculateTotal(){
+    public double calculateTotal() {
 
         double total = 0;
 
-        for(RequestItem item: items){
+        for (RequestItem item : items) {
             total += item.calculateTotal();
         }
 
@@ -63,9 +88,13 @@ public class Request {
         return items;
     }
 
-
-
     public LocalDateTime getCreatedAt() {
         return createdAt;
     }
+
+    public List<StatusHistory> getHistory() {
+        return history;
+    }
+
+
 }

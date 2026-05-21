@@ -95,7 +95,7 @@ public class FileManager {
                     String[] parts = line.split(",");
 
                     current = new Request();
-                    current.setStatus(OrderStatus.valueOf(parts[1]));
+                    current.updateStatus(OrderStatus.valueOf(parts[1]));
                 } else {
                     String[] parts = line.split(",");
 

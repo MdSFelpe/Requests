@@ -42,19 +42,22 @@ import java.time.format.DateTimeFormatter;
          List<Product> products = FileManager.loadProducts();
          List<Request> requests = new ArrayList<>();
          Scanner sc = new Scanner(System.in);
+
          DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
 
+
          int option = 0;
-         while (option != 6) {
+         while (option != 7) {
 
              System.out.println("1 - Register product");
              System.out.println("2 - Create order");
              System.out.println("3 - List products");
              System.out.println("4 - Order List");
              System.out.println("5 - Update order status");
-             System.out.println("6 - Exit");
+             System.out.println("6 - View Order Details");
+             System.out.println("7 - Exit");
 
-             option = readInt(sc, "Choose an option:");
+             option = readInt(sc, "Choose an option: ");
              sc.nextLine(); // Buffer
 
              if (option == 1) {
@@ -75,6 +78,10 @@ import java.time.format.DateTimeFormatter;
 
              if (option == 5) {
                  updateOrderStatus(requests, sc);
+             }
+
+             if (option == 6) {
+                 viewOrderDetails(requests, sc);
              }
 
          }
@@ -131,7 +138,7 @@ import java.time.format.DateTimeFormatter;
              System.out.println("Choose the product by number:");
 
              for (int i = 0; i < products.size(); i++) {
-                 System.out.println(i + " - " + products.get(i).getName() + " - $" + products.getFirst().getPrice());
+                 System.out.println(i + " - " + products.get(i).getName() + " - $" + products.get(i).getPrice());;
              }
 
              int choice = readInt(sc, "Choose an option:");
@@ -207,8 +214,55 @@ import java.time.format.DateTimeFormatter;
          }
      }
 
-     //Update Order Status OPT 5
+     // Update Order Status OPT 5
      public static void updateOrderStatus(List<Request> requests, Scanner sc) {
+
+         if (requests.isEmpty()) {
+             System.out.println("No orders available!");
+             return;
+         }
+
+         for (int i = 0; i < requests.size(); i++) {
+             System.out.println(i + " - Order | Status: " + requests.get(i).getStatus());
+         }
+
+         int index = readInt(sc, "Choose the order:");
+
+         if (index >= 0 && index < requests.size()) {
+
+             Request r = requests.get(index);
+
+             System.out.println("1 - PREPARING");
+             System.out.println("2 - SHIPPED");
+             System.out.println("3 - DELIVERED");
+             System.out.println("4 - CANCELLED");
+
+             int choice = readInt(sc, "Choose new status:");
+
+             boolean updated = false;
+
+             if (choice == 1) {
+                 updated = r.updateStatus(OrderStatus.PREPARING);
+             } else if (choice == 2) {
+                 updated = r.updateStatus(OrderStatus.SHIPPED);
+             } else if (choice == 3) {
+                 updated = r.updateStatus(OrderStatus.DELIVERED);
+             } else if (choice == 4) {
+                 updated = r.updateStatus(OrderStatus.CANCELLED);
+             } else {
+                 System.out.println("Invalid option!");
+             }
+
+             if (updated) {
+                 FileManager.saveRequests(requests);
+             }
+
+         } else {
+             System.out.println("Invalid order!");
+         }
+     }
+
+     public static void viewOrderDetails(List<Request> requests, Scanner sc) {
 
          if (requests.isEmpty()) {
              System.out.println("No orders available!");
@@ -225,27 +279,40 @@ import java.time.format.DateTimeFormatter;
 
              Request r = requests.get(index);
 
-             System.out.println("1 - PAID");
-             System.out.println("2 - CANCELLED");
+             System.out.println("Order Details");
+             System.out.println("Status: " + r.getStatus());
+             DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
 
-             int choice = readInt(sc, "Choose new status:");
+             System.out.println("Created at: " + r.getCreatedAt().format(fmt));
 
-             boolean updated = false;
+             System.out.println("\nItems:");
 
-             if (choice == 1) {
-                 updated = r.setStatus(OrderStatus.PAID);
-             } else if (choice == 2) {
-                 updated = r.setStatus(OrderStatus.CANCELLED);
-             } else {
-                 System.out.println("Invalid option!");
+             for (RequestItem item : r.getItems()) {
+                 System.out.println(
+                         item.getProduct().getName()
+                                 + " - "
+                                 + item.getQuantity()
+                                 + "x"
+                 );
              }
 
-             if (updated) {
-                 FileManager.saveRequests(requests);
+             System.out.printf("\nTotal: $%.2f\n", r.calculateTotal());
+
+             System.out.println("\nHistory:");
+
+             for (StatusHistory h : r.getHistory()) {
+                 System.out.println(
+                         h.getChangedAt().format(fmt)
+                                 + " - "
+                                 + h.getStatus()
+                 );
              }
 
+         } else {
+             System.out.println("Invalid order!");
          }
      }
+
  }
 
 
